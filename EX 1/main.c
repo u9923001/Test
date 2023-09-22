@@ -89,6 +89,7 @@ void DelayMs(uint32_t ms)
 
 int main(void){
 	LedInit();
+	SysTickInit();
 	
 	LedGreen(true);
 	
