@@ -8,7 +8,9 @@
 void LedInit(void){
 	GPIO_InitTypeDef tmp;
 	
+	// Remember RCC Enable
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+	
 	// Green LED 
 	tmp.GPIO_Pin   = GPIO_Pin_0;
 	tmp.GPIO_Speed = GPIO_Speed_50MHz;
@@ -49,12 +51,52 @@ void LedRed(bool enable){
 	}
 }
 
+void SysTickInit(void){
+	// Update SystemCoreClock value
+	SystemCoreClockUpdate();
+	// Configure the SysTick timer to overflow every 1 us
+	SysTick_Config(SystemCoreClock / 1000000);
+}
+
+static __IO uint32_t usTicks;
+
+// SysTick_Handler function will be called every 1 us
+void SysTick_Handler()
+{
+    if (usTicks != 0)
+    {
+        usTicks--;
+    }
+}
+
+void DelayUs(uint32_t us)
+{
+    // Reload us value
+    usTicks = us;
+    // Wait until usTick reach zero
+    while (usTicks);
+}
+
+void DelayMs(uint32_t ms)
+{
+    // Wait until ms reach zero
+    while (ms--)
+    {
+        // Delay 1ms
+        DelayUs(1000);
+    }
+}
+
 int main(void){
 	LedInit();
 	
 	LedGreen(true);
 	
 	while(1){
+		LedGreen(true);
+		DelayMs(1000);
+		LedGreen(false);
+		DelayMs(1000);
 	}
 	
 	return 0;
