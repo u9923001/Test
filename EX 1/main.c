@@ -8,6 +8,7 @@
 void LedInit(void){
 	GPIO_InitTypeDef tmp;
 	
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 	// Green LED 
 	tmp.GPIO_Pin   = GPIO_Pin_0;
 	tmp.GPIO_Speed = GPIO_Speed_50MHz;
