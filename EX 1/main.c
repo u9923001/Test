@@ -51,17 +51,40 @@ void LedRed(bool enable){
 	}
 }
 
+__STATIC_INLINE uint32_t SysTick_Config2(uint32_t ticks)
+{
+  if ((ticks - 1UL) > SysTick_LOAD_RELOAD_Msk)
+  {
+    return (1UL);                                                   /* Reload value impossible */
+  }
+
+  SysTick->LOAD  = (uint32_t)(ticks - 1UL);                         /* set reload register */
+  NVIC_SetPriority (SysTick_IRQn, (1UL << __NVIC_PRIO_BITS) - 1UL); /* set Priority for Systick Interrupt */
+  SysTick->VAL   = 0UL;                                             /* Load the SysTick Counter Value */
+  SysTick->CTRL  = SysTick_CTRL_CLKSOURCE_Msk |
+                   SysTick_CTRL_TICKINT_Msk   |
+                   SysTick_CTRL_ENABLE_Msk;                         /* Enable SysTick IRQ and SysTick Timer */
+  return (0UL);                                                     /* Function successful */
+}
+
 void SysTickInit(void){
 	// Update SystemCoreClock value
 	SystemCoreClockUpdate();
 	// Configure the SysTick timer to overflow every 1 us
-	SysTick_Config(SystemCoreClock / 1000000);
+	if (SysTick_Config2(SystemCoreClock / 1000000))
+	{ 
+		/* Capture error */ 
+		while (1);
+	}
+	
+	SysTick->CTRL &= ~ SysTick_CTRL_ENABLE_Msk;
+
 }
 
 static __IO uint32_t usTicks;
 
 // SysTick_Handler function will be called every 1 us
-void SysTick_Handler()
+void SysTick_Handler(void)
 {
     if (usTicks != 0)
     {
@@ -73,8 +96,11 @@ void DelayUs(uint32_t us)
 {
     // Reload us value
     usTicks = us;
+	
+	  SysTick->CTRL |=  SysTick_CTRL_ENABLE_Msk;
+	
     // Wait until usTick reach zero
-    while (usTicks);
+    while (usTicks != 0);
 }
 
 void DelayMs(uint32_t ms)
